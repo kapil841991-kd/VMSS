@@ -1,0 +1,100 @@
+trigger: none
+
+pool: ToDo-Agent
+
+stages:
+  - stage: Terraform
+    displayName: Terraform Install Init Validate Plan
+    jobs:
+      - job: InfraCheck
+        steps:
+
+        - task: TerraformInstaller@1
+          displayName: Terraform Install
+          inputs:
+            terraformVersion: 'latest'
+
+        - task: TerraformTask@5
+          displayName: Terraform Init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
+            backendServiceArm: 'ToDo-SC'
+            backendAzureRmOverrideSubscriptionID: 'c7f9694d-3748-4963-973d-64fb701d594a'
+            backendAzureRmResourceGroupName: 'Netflix-RG'
+            backendAzureRmStorageAccountName: 'tfbackendstorage3211'
+            backendAzureRmContainerName: 'tfstate'
+            backendAzureRmKey: 'log/dev.terraform.tfstate'
+
+        - task: TerraformTask@5
+          displayName: Terraform Validate
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
+
+        - task: TerraformTask@5
+          displayName: Terraform Plan
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
+            environmentServiceNameAzureRM: 'ToDo-SC'
+
+  - stage: SecurityScanning
+    displayName: Security Sacnning
+    dependsOn: Terraform
+    jobs:
+      - job: tflint
+        displayName: tflint
+        steps:
+
+        - task: CmdLine@2
+          displayName: tflint
+          continueOnError: true
+          inputs:
+            script: 'tflint --recursive /f junit > tflint-report.xml'
+            workingDirectory: '$(System.DefaultWorkingDirectory)'
+        - task: PublishTestResults@2
+          displayName: tflint-report publish
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: 'tflint-report.xml'
+            testRunTitle: 'tflint-scan'
+
+      - job: checkov
+        dependsOn: tflint
+        displayName: checkov
+        steps:
+        - task: CmdLine@2
+          displayName: checkov
+          continueOnError: true
+          inputs:
+            script: 'checkov -d . -o junitxml > checkov-out.xml'
+            workingDirectory: '$(System.DefaultWorkingDirectory)'
+        - task: PublishTestResults@2
+          displayName: checkov-publish
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: 'checkov-out.xml'
+            testRunTitle: 'checkov'
+
+  - stage: costEstimation
+    displayName: Cost Estimation
+    jobs:
+      - job: infracost
+        displayName: infracost
+        steps:
+        - task: CmdLine@2
+          displayName: infracost
+          inputs:
+            script: 'infracost breakdown --path . --format=html > cost-out.html'
+            workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+        - task: PublishBuildArtifacts@1
+          displayName: publish cost
+          inputs:
+            PathtoPublish: '$(System.DefaultWorkingDirectory)/cost-out.html'
+            ArtifactName: 'costing'
+            publishLocation: 'Container'
