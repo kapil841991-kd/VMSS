@@ -98,3 +98,40 @@ stages:
             PathtoPublish: '$(System.DefaultWorkingDirectory)/cost-out.html'
             ArtifactName: 'costing'
             publishLocation: 'Container'
+
+  - stage: ManualApproval
+    displayName: Manual Approval Before Apply
+    dependsOn:
+      - Terraform
+      - SecurityScanning
+      - costEstimation
+    jobs:
+      - job: Approval
+        displayName: Await Approval
+        pool: server
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 60
+          inputs:
+            notifyUsers: |
+              kdsrivastava91@gmail.com
+            instructions: 'Please review Terraform Plan, Security & Cost reports before approving.'
+            onTimeout: reject
+
+
+  - stage: TerraformApply
+    displayName: Terraform Apply
+    dependsOn: ManualApproval
+    condition: succeeded()
+    jobs:
+      - job: Apply
+        steps:
+
+        - task: TerraformTask@5
+          displayName: Terraform Apply
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
+            environmentServiceNameAzureRM: 'ToDo-SC'
+            commandOptions: '-auto-approve'
