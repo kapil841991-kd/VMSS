@@ -118,20 +118,31 @@ stages:
             instructions: 'Please review Terraform Plan, Security & Cost reports before approving.'
             onTimeout: reject
 
-
   - stage: TerraformApply
     displayName: Terraform Apply
     dependsOn: ManualApproval
-    condition: succeeded()
     jobs:
-      - job: Apply
-        steps:
+    - job: Apply
+      steps:
 
-        - task: TerraformTask@5
-          displayName: Terraform Apply
-          inputs:
-            provider: 'azurerm'
-            command: 'apply'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
-            environmentServiceNameAzureRM: 'ToDo-SC'
-            commandOptions: '-auto-approve'
+      - task: TerraformTask@5
+        displayName: Terraform Init
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
+          backendServiceArm: 'ToDo-SC'
+          backendAzureRmOverrideSubscriptionID: 'c7f9694d-3748-4963-973d-64fb701d594a'
+          backendAzureRmResourceGroupName: 'Netflix-RG'
+          backendAzureRmStorageAccountName: 'tfbackendstorage3211'
+          backendAzureRmContainerName: 'tfstate'
+          backendAzureRmKey: 'log/dev.terraform.tfstate'
+
+      - task: TerraformTask@5
+        displayName: Terraform Apply
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
+          environmentServiceNameAzureRM: 'ToDo-SC'
+          commandOptions: '-auto-approve'
