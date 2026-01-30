@@ -20,7 +20,7 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
-            backendServiceArm: 'ToDo-SC'
+            backendServiceArm: 'ADO-SCS'
             backendAzureRmOverrideSubscriptionID: 'c7f9694d-3748-4963-973d-64fb701d594a'
             backendAzureRmResourceGroupName: 'Netflix-RG'
             backendAzureRmStorageAccountName: 'tfbackendstorage3211'
@@ -40,7 +40,7 @@ stages:
             provider: 'azurerm'
             command: 'plan'
             workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
-            environmentServiceNameAzureRM: 'ToDo-SC'
+            environmentServiceNameAzureRM: 'ADO-SCS'
 
   - stage: SecurityScanning
     displayName: Security Sacnning
@@ -131,7 +131,7 @@ stages:
           provider: 'azurerm'
           command: 'init'
           workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
-          backendServiceArm: 'ToDo-SC'
+          backendServiceArm: 'ADO-SCS'
           backendAzureRmOverrideSubscriptionID: 'c7f9694d-3748-4963-973d-64fb701d594a'
           backendAzureRmResourceGroupName: 'Netflix-RG'
           backendAzureRmStorageAccountName: 'tfbackendstorage3211'
@@ -144,5 +144,5 @@ stages:
           provider: 'azurerm'
           command: 'apply'
           workingDirectory: '$(System.DefaultWorkingDirectory)/environments/dev'
-          environmentServiceNameAzureRM: 'ToDo-SC'
+          environmentServiceNameAzureRM: 'ADO-SCS'
           commandOptions: '-auto-approve'
