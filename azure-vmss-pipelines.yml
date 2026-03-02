@@ -14,6 +14,9 @@ stages:
           inputs:
             terraformVersion: 'latest'
 
+        - script: az account show
+          displayName: Check Azure Login
+
         - task: TerraformTask@5
           displayName: Terraform Init
           inputs:
